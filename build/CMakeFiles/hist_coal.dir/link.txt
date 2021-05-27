@@ -1,0 +1,1 @@
+/usr/bin/g++  CMakeFiles/hist_coal.dir/hist_coal.cu.o -o hist_coal  -L"/usr/local/cuda-11.1/targets/x86_64-linux/lib/stubs" -L"/usr/local/cuda-11.1/targets/x86_64-linux/lib" -lcudadevrt -lcudart_static -lrt -lpthread -ldl

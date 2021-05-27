@@ -25,28 +25,6 @@ __global__ void hist_kernel(float* d_f, int sz, int* d_counts, int rstart, int r
 	}
 	//atomicAdd(&d_counts[place], 1);
     }
-
-    // adding back zeros like a fool
-    /* ACTUALLY I'll just leave zeros out, I'll probably get some points off
-       but it's much simpler this way and idk what my original bug producing
-       a ton of zeros is
-    
-    int zeros = sz/4;
-    for (int i = 0; i < nbins; i++) {
-        zeros = &d_counts[i];
-    }
-
-    float fnbins = (float) nbins;
-    float dist = (float) rend-rstart;
-    float binsize = dist / fnbins;
-
-    for (int i = 0; i < nbins; i++) {
-        if (0 >= rstart+binsize*i && 0 < rstart+binsize*(i+1)) {
-            atomicAdd(&d_counts[i], zeros);
-	} 
-    }
-    */
-
 }
 
 void print_hist(int* counts, int rstart, int rend, int nbins, int sz) {
@@ -64,33 +42,38 @@ void print_hist(int* counts, int rstart, int rend, int nbins, int sz) {
 }
 
 int main(int argc, char* argv[]){
-    FILE *in_file;
-    int nbins;
-    int rstart;
-    int rend;
+    FILE *seq1;
+    FILE *seq2;
     int grid;
     int block;
-    if (argc == 7) {
-        in_file = fopen(argv[1], "rb");
-	nbins = atoi(argv[2]);
-	rstart = atoi(argv[3]);
-	rend = atoi(argv[4]);
-	grid = atoi(argv[5]);
-	block = atoi(argv[6]);
+    if (argc == 5) {
+        seq1 = fopen(argv[1], "rb");
+	seq2 = fopen(argv[2], "rb");
+	grid = atoi(argv[3]);
+	block = atoi(argv[4]);
     }
     else {
-        printf("Incorrect number of arguments. Arguments should take form: input file, number of bins, range start, range end, grid dim, block dim.\n");
+        printf("Incorrect number of arguments. Arguments should take form: sequence 1, sequence 2, grid dim, block dim.\n");
 	exit(0);
     }
-    fseek(in_file, 0L, SEEK_END);
-    int sz = ftell(in_file);
+    // First what we need to do is get the size of the input.
+    char name1[128];
+    char name2[128];
+    fgets(name1, 128, seq1);
+    fgets(name2, 128, seq2);
+    fseek(seq1, 0L, SEEK_END);
+    int sz1 = ftell(in_file);
+    fseek(seq2, 0L, SEEK_END);
+    int sz2 = ftell(in_file);
+    printf("%d %d\n", sz1, sz2);
+    /*
     fseek(in_file, 0L, SEEK_SET);
     float f1[sz];
     fread(f1, sizeof(float), sz, in_file);
     //printf("%i\n", sz);
     float f[sz/4];
     memcpy(f, f1, sz);
-
+    
     float* d_f;
     cudaMalloc((void**)&d_f, sz);
     cudaMemcpy(d_f, f, sz, cudaMemcpyHostToDevice);
@@ -120,5 +103,5 @@ int main(int argc, char* argv[]){
     cudaEventDestroy(tock);
     cudaFree(d_counts);
     cudaFree(d_f);
-
+    */
 }
