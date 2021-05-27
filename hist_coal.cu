@@ -44,13 +44,13 @@ void print_hist(int* counts, int rstart, int rend, int nbins, int sz) {
 int main(int argc, char* argv[]){
     FILE *seq1;
     FILE *seq2;
-    int grid;
-    int block;
+    //int grid;
+    //int block;
     if (argc == 5) {
         seq1 = fopen(argv[1], "rb");
 	seq2 = fopen(argv[2], "rb");
-	grid = atoi(argv[3]);
-	block = atoi(argv[4]);
+        //grid = atoi(argv[3]);
+	//block = atoi(argv[4]);
     }
     else {
         printf("Incorrect number of arguments. Arguments should take form: sequence 1, sequence 2, grid dim, block dim.\n");
@@ -62,10 +62,11 @@ int main(int argc, char* argv[]){
     fgets(name1, 128, seq1);
     fgets(name2, 128, seq2);
     fseek(seq1, 0L, SEEK_END);
-    int sz1 = ftell(in_file);
+    int sz1 = ftell(seq1);
     fseek(seq2, 0L, SEEK_END);
-    int sz2 = ftell(in_file);
+    int sz2 = ftell(seq2);
     printf("%d %d\n", sz1, sz2);
+    printf("%d", strlen(name1));
     /*
     fseek(in_file, 0L, SEEK_SET);
     float f1[sz];
