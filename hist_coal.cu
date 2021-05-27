@@ -1,30 +1,87 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-__global__ void hist_kernel(char* d1, char* d2, char* dmatch1, char* dmatch2, int sz1, int sz2) {
-    for (int i = threadIdx.x + blockIdx.x * blockDim.x; i < sz1; i += blockDim.x * gridDim.x) {
-	for (int j = threadIdx.y + blockIdx.y * blockDim.y; j < sz2; j += blockDim.y * gridDim.y) {
+__global__ void hist_kernel(char* d1, char* d2, int* ftable, int* source1, int* source2, char* dmatch1, char* dmatch2, int sz1, int sz2, int gap, int reward) {
+    int collen = sz1;
+    int rowlen = sz2;
+    int tablesize = max(sz1, sz2);
+    //int ftable[rowlen*collen];
+    //int source1[rowlen*collen];
+    //int source2[rowlen*collen];
+    // initialize edges of ftable
+    // sz1 = num rows, sz2 = num cols
+    for (int i = 0; i < sz1; i++) {
+        for (int j = 0; j < sz2; j++) {
+            ftable[i*sz2+j] = 0;
+        }
+    }
+    for (int i = threadIdx.x + blockIdx.x * blockDim.x+1; i < sz1; i += blockDim.x * gridDim.x) {
+	for (int j = threadIdx.y + blockIdx.y * blockDim.y+1; j < sz2; j += blockDim.y * gridDim.y) {
+	    int score = 0;
+	    // calculate ftable entry at this point
 	    if (d1[i] == d2[j]) {
-	        printf("Match found\n");
-		printf("Indices %d %d \n", i, j);
+	        score = reward;
+	    } else {
+	        score = 0;
+	    }
+	    if ((gap+ftable[i*sz2+j-1] >= score+ftable[(i-1)*sz2+j-1]) 
+                && (gap+ftable[i*sz2+j-1] >= gap+ftable[(i-1)*sz2+j])
+		&& (gap+ftable[i*sz2+j-1] > 0)){
+		    source1[i*sz2+j] = i;
+		    source2[i*sz2+j] = j-1;
+	    }
+            else if ((score+ftable[(i-1)*sz2+j-1] >= gap+ftable[(i-1)*sz2+j]) 
+		      && (score+ftable[(i-1)*sz2+j-1] > 0)) {
+	        source1[i*sz2+j] = i-1;
+		source2[i*sz2+j] = j-1;
+		ftable[i*sz2+j] = score+ftable[(i-1)*sz2+j-1];
+	    }
+	    else if (gap+ftable[(i-1)*sz2+j] > 0) {
+	        source1[i*sz2+j] = i-1;
+		source2[i*sz2+j] = j;
+		ftable[i*sz2+j] = gap+ftable[(i-1)*sz2+j];
+	    }
+	    else {
+	        ftable[i*sz2+j] = 0;
 	    }
 	}	
     }
+    // now go through whole ftable and find max value - 
+    // this should be parallelized too
+    int maxval = -1000;
+    int spot1 = 0;
+    int spot2 = 0;
+    for (int i = threadIdx.x + blockIdx.x * blockDim.x+1; i < sz1; i += blockDim.x * gridDim.x) {
+        for (int j = threadIdx.y + blockIdx.y * blockDim.y+1; j < sz2; j += blockDim.y * gridDim.y) {
+            if (ftable[i*sz2+j] > maxval) {
+	        maxval = ftable[i*sz2+j];
+		spot1 = i;
+		spot2 = j;
+	    }
+	}
+    }
+
+    // now we rebuild the output sequences
+    printf("%d %d\n", spot1, spot2);
 }
 
 int main(int argc, char* argv[]){
     FILE *seq1;
     FILE *seq2;
+    int gap;
+    int reward;
     int grid;
     int block;
     if (argc == 5) {
         seq1 = fopen(argv[1], "rb");
 	seq2 = fopen(argv[2], "rb");
-        grid = atoi(argv[3]);
-	block = atoi(argv[4]);
+        gap = atoi(argv[3]);
+	reward = atoi(argv[4]);
+	grid = atoi(argv[5]);
+	block = atoi(argv[6]);
     }
     else {
-        printf("Incorrect number of arguments. Arguments should take form: sequence 1, sequence 2, grid dim, block dim.\n");
+        printf("Incorrect number of arguments. Arguments should take form: sequence 1, sequence 2, gap penalty, score for a match, grid dim, block dim.\n");
 	exit(0);
     }
     // First what we need to do is get the size of the input.
@@ -75,7 +132,7 @@ int main(int argc, char* argv[]){
     cudaEventCreate(&tock);
     // call funciton and report time
     cudaEventRecord(tick, 0);
-    hist_kernel<<<grid, block>>>(d1, d2, dmatch1, dmatch2, sz1, sz2);
+    hist_kernel<<<grid, block>>>(d1, d2, dmatch1, dmatch2, sz1, sz2, gap, reward);
     cudaEventRecord(tock, 0);
     cudaEventSynchronize(tock);
     float time;
