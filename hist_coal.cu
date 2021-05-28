@@ -203,8 +203,8 @@ int main(int argc, char* argv[]){
     cudaEventElapsedTime(&time1, tick1, tock1);
     printf("time to find optimal sequence: %0.6f ms\n", time1);
     cudaMemcpy(spots, d_spots, 3*sizeof(int), cudaMemcpyDeviceToHost);
-    printf("Best spot: %d %d\n", spots[0], spots[1]);
-    printf("Max score: %d \n", spots[2]);
+    //printf("Best spot: %d %d\n", spots[0], spots[1]);
+    //printf("Max score: %d \n", spots[2]);
 
     // at this point we have our optimally alinged spot. 
     // now we just want to reconstruct the sequence. parallelizing this
@@ -267,7 +267,18 @@ int main(int argc, char* argv[]){
     //align1[aligncount] = '\0';
     //align2[aligncount] = '\0';
     //printf("%s", align1);
-    printf("Visual representation of alignment:\n");
+    printf("Visual representation of alignment (sequences are reversed):\n");
     printf("%s\n%s\n", align1, align2);
 
+    float identity = 0.0;
+    for (int i = 0; i < aligncount; i++) {
+        if (align1[i] == align2[i]) {
+            identity += 1;
+        }
+    }
+    identity = identity / aligncount;
+    printf("Identity percent:\n");
+    printf("%.2f\n", identity*100);
+    printf("Alignment score:\n");
+    printf("%d\n", spots[2]);
 }
