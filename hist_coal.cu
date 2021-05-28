@@ -25,8 +25,8 @@ __global__ void align_kernel(char* d1, char* d2, int* ftable, int* source1, int*
     //int source2[rowlen*collen];
     // initialize edges of ftable
     // sz1 = num rows, sz2 = num cols
-    for (int i = threadIdx.x + blockIdx.x * blockDim.x+1; i < sz1; i += blockDim.x * gridDim.x) {
-	for (int j = threadIdx.y + blockIdx.y * blockDim.y+1; j < sz2; j += blockDim.y * gridDim.y) {
+    for (int i = threadIdx.x + blockIdx.x * blockDim.x; i < sz1; i += blockDim.x * gridDim.x) {
+	for (int j = threadIdx.y + blockIdx.y * blockDim.y; j < sz2; j += blockDim.y * gridDim.y) {
 	    int score = 0;
 	    // calculate ftable entry at this point
 	    if (d1[i] == d2[j]) {
@@ -228,32 +228,37 @@ int main(int argc, char* argv[]){
     int newspot[3];
     int aligncount = 0;
     while ((spots[0] != 0) && (spots[1] != 0)) {
-	
+	//printf("%s\n%s\n", align1, align2);
 	newspot[0] = Ssource1[spots[0]*sz2+spots[1]];
 	newspot[1] = Ssource2[spots[0]*sz2+spots[1]];
-	
+	printf("(%d, %d) \n", spots[0], spots[1]);
+	printf("%c\n%c\n", text1[spots[0]-1], text2[spots[1]-1]);
 	if ((newspot[0]+1 == spots[0]) && (newspot[1]+1==spots[1])) {
             align1[aligncount] = text1[spots[0]-1];
             align2[aligncount] = text2[spots[1]-1];
-	    aligncount = aligncount + 1;
+	    //aligncount = aligncount + 1;
         }
 	else if (newspot[0] == spots[0]) {
             align1[aligncount] = '_';
 	    align2[aligncount] = text2[spots[1]-1];
-	    aligncount = aligncount + 1;
+	    //aligncount = aligncount + 1;
         }
 	else if (newspot[1] == spots[1]) {
 	    align1[aligncount] = text1[spots[0]-1];
 	    align2[aligncount] = '_';
-	    aligncount = aligncount + 1;
+	    //aligncount = aligncount + 1;
 	}
+	//printf("%c", align1[aligncount-1]);
+	aligncount = aligncount + 1;
 	spots[0] = newspot[0];
 	spots[1] = newspot[1];
-	printf("%d %d \n", spots[0], spots[1]);
+	//printf("%d %d \n", spots[0], spots[1]);
     }
-    align1[aligncount] = '\0';
-    align2[aligncount] = '\0';
-    printf("Visual representation of alingment:\n");
+    //printf("aa %s aa \n", align1);
+    //align1[aligncount] = '\0';
+    //align2[aligncount] = '\0';
+    //printf("%s", align1);
+    printf("Visual representation of alignment:\n");
     printf("%s\n%s\n", align1, align2);
 
 }
