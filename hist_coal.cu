@@ -223,33 +223,42 @@ int main(int argc, char* argv[]){
 	printf("\n");
     }
     */
-    char align1[sz1];
-    char align2[sz2];
+    char align1[sz1+sz2];
+    char align2[sz1+sz2];
     int newspot[3];
     int aligncount = 0;
     while ((spots[0] != 0) && (spots[1] != 0)) {
 	//printf("%s\n%s\n", align1, align2);
 	newspot[0] = Ssource1[spots[0]*sz2+spots[1]];
 	newspot[1] = Ssource2[spots[0]*sz2+spots[1]];
-	printf("(%d, %d) \n", spots[0], spots[1]);
-	printf("%c\n%c\n", text1[spots[0]-1], text2[spots[1]-1]);
+	//printf("(%d, %d) \n", spots[0], spots[1]);
+	//printf("%c\n%c\n", text1[spots[0]-1], text2[spots[1]-1]);
+	//printf("%s\n%s\n", align1, align2);
 	if ((newspot[0]+1 == spots[0]) && (newspot[1]+1==spots[1])) {
+	    //printf("aaaaa\n");
+	    //printf("%c\n", text2[spots[1]-1]);
             align1[aligncount] = text1[spots[0]-1];
             align2[aligncount] = text2[spots[1]-1];
+	    //printf("%s\n", align2);
 	    //aligncount = aligncount + 1;
         }
 	else if (newspot[0] == spots[0]) {
+	    //printf("bbbbb\n");
             align1[aligncount] = '_';
 	    align2[aligncount] = text2[spots[1]-1];
 	    //aligncount = aligncount + 1;
         }
 	else if (newspot[1] == spots[1]) {
+	    //printf("cccc\n");
 	    align1[aligncount] = text1[spots[0]-1];
 	    align2[aligncount] = '_';
 	    //aligncount = aligncount + 1;
 	}
 	//printf("%c", align1[aligncount-1]);
+	//printf("%s\n%s\n", align1, align2);
 	aligncount = aligncount + 1;
+	align1[aligncount] = '\0';
+	align2[aligncount] = '\0';
 	spots[0] = newspot[0];
 	spots[1] = newspot[1];
 	//printf("%d %d \n", spots[0], spots[1]);
