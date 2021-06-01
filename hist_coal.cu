@@ -250,14 +250,16 @@ int main(int argc, char* argv[]){
         }
 	else if (newspot[0] == spots[0]) {
 	    //printf("bbbbb\n");
-            align1[aligncount] = '_';
+	    align1[aligncount] = align1[aligncount-1];
+            align1[aligncount-1] = '_';
 	    align2[aligncount] = text2[spots[1]-1];
 	    //aligncount = aligncount + 1;
         }
 	else if (newspot[1] == spots[1]) {
 	    //printf("cccc\n");
 	    align1[aligncount] = text1[spots[0]-1];
-	    align2[aligncount] = '_';
+	    align2[aligncount] = align2[aligncount-1];
+	    align2[aligncount-1] = '_';
 	    //aligncount = aligncount + 1;
 	}
 	//printf("%c", align1[aligncount-1]);
@@ -277,15 +279,16 @@ int main(int argc, char* argv[]){
 	    int max = 0;
 	    // if max is vertical
 	    if (max < Fftable[(spots[0]-1)*sz2+spots[1]]) {
-                max = Fftable[(spots[0]-1)*sz2+spots[1]];
+                max = Fftable[(spots[0]-1)*sz2+spots[1]]-gap;
 		newspot[0] = spots[0]-1;
 		newspot[1] = spots[1];
 		align1[aligncount-1] = text1[newspot[0]];
-		align2[aligncount-1] = '_';
+		align2[aligncount-1] = align2[aligncount-2];
+		align2[aligncount-2] = '_';
 	    }
 	    // if max is diagonal
 	    else if (max < Fftable[(spots[0]-1)*sz2+spots[1]-1]) {
-                max = Fftable[(spots[0]-1)*sz2+spots[1]]-1;
+                max = Fftable[(spots[0]-1)*sz2+spots[1]-1]+reward;
 		newspot[0] = spots[0]-1;
 		newspot[1] = spots[1]-1;
 		align1[aligncount-1] = text1[newspot[0]];
@@ -293,10 +296,11 @@ int main(int argc, char* argv[]){
 	    }
 	    // if max is horizontal
 	    else if (max < Fftable[(spots[0])*sz2+spots[1]-1]) {
-                max = Fftable[(spots[0])*sz2+spots[1]-1];
+                max = Fftable[(spots[0])*sz2+spots[1]-1]-gap;
 		newspot[0] = spots[0];
 		newspot[1] = spots[1]-1;
-		align1[aligncount-1] = '_';
+		align1[aligncount-1] = align1[aligncount-2];
+		align1[aligncount-2] = '_';
 		align2[aligncount-1] = text2[newspot[1]];
 	    }
 	    //printf("go to %d %d instead\n", newspot[0], newspot[1]);
