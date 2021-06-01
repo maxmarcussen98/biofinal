@@ -27,6 +27,8 @@ __global__ void align_kernel(char* d1, char* d2, int* ftable, int* source1, int*
     // sz1 = num rows, sz2 = num cols
     for (int i = threadIdx.x + blockIdx.x * blockDim.x; i < sz1; i += blockDim.x * gridDim.x) {
 	for (int j = threadIdx.y + blockIdx.y * blockDim.y; j < sz2; j += blockDim.y * gridDim.y) {
+	    
+	    //printf("(%d %d\n", i, j);
 	    int score = 0;
 	    // calculate ftable entry at this point
 	    if (d1[i] == d2[j]) {
@@ -52,6 +54,7 @@ __global__ void align_kernel(char* d1, char* d2, int* ftable, int* source1, int*
 		ftable[i*sz2+j] = gap+ftable[(i-1)*sz2+j];
 	    }
 	    else {
+		//printf("%d %d\n", i, j);
 	        ftable[i*sz2+j] = 0;
 	    }
 	    /*
@@ -113,7 +116,7 @@ int main(int argc, char* argv[]){
     int sz1 = ftell(seq1)-strlen(name1)-1;
     fseek(seq2, 0L, SEEK_END);
     int sz2 = ftell(seq2)-strlen(name2)-1;
-    printf("%d %d\n", sz1, sz2);
+    printf("Length of sequences: %d, %d\n", sz1, sz2);
     // sz1 and sz2 are the sizes of the sequences after the first line
 
     // get back to start of sequence
@@ -227,7 +230,10 @@ int main(int argc, char* argv[]){
     char align2[sz1+sz2];
     int newspot[3];
     int aligncount = 0;
-    while ((spots[0] != 0) && (spots[1] != 0)) {
+    int found = 0;
+    while (found == 0) {
+	//align1[aligncount] = 'o';
+	//align2[aligncount] = 'o';
 	//printf("%s\n%s\n", align1, align2);
 	newspot[0] = Ssource1[spots[0]*sz2+spots[1]];
 	newspot[1] = Ssource2[spots[0]*sz2+spots[1]];
@@ -257,16 +263,57 @@ int main(int argc, char* argv[]){
 	//printf("%c", align1[aligncount-1]);
 	//printf("%s\n%s\n", align1, align2);
 	aligncount = aligncount + 1;
-	align1[aligncount] = '\0';
-	align2[aligncount] = '\0';
+	//align1[aligncount] = '\0';
+	//align2[aligncount] = '\0';
+
+	// correct for edges - if we have a better sequence beyond border
+	// check where max is - gap up, gap side, or next letter in sequences
+	if ((newspot[0] == 0) && (newspot[1] == 0)) {
+            //printf("border early\n");
+	    //printf("%d %d\n", spots[0], spots[1]);
+	    //printf("vert %d\n", Fftable[(spots[0]-1)*sz2+spots[1]]);
+	    //printf("diag %d\n", Fftable[(spots[0]-1)*sz2+spots[1]-1]);
+	    //printf("hori %d\n", Fftable[(spots[0])*sz2+spots[1]-1]);
+	    int max = 0;
+	    // if max is vertical
+	    if (max < Fftable[(spots[0]-1)*sz2+spots[1]]) {
+                max = Fftable[(spots[0]-1)*sz2+spots[1]];
+		newspot[0] = spots[0]-1;
+		newspot[1] = spots[1];
+		align1[aligncount-1] = text1[newspot[0]];
+		align2[aligncount-1] = '_';
+	    }
+	    // if max is diagonal
+	    else if (max < Fftable[(spots[0]-1)*sz2+spots[1]-1]) {
+                max = Fftable[(spots[0]-1)*sz2+spots[1]]-1;
+		newspot[0] = spots[0]-1;
+		newspot[1] = spots[1]-1;
+		align1[aligncount-1] = text1[newspot[0]];
+		align2[aligncount-1] = text2[newspot[1]];
+	    }
+	    // if max is horizontal
+	    else if (max < Fftable[(spots[0])*sz2+spots[1]-1]) {
+                max = Fftable[(spots[0])*sz2+spots[1]-1];
+		newspot[0] = spots[0];
+		newspot[1] = spots[1]-1;
+		align1[aligncount-1] = '_';
+		align2[aligncount-1] = text2[newspot[1]];
+	    }
+	    //printf("go to %d %d instead\n", newspot[0], newspot[1]);
+	    spots[2] += max;
+	}
+
 	spots[0] = newspot[0];
 	spots[1] = newspot[1];
-	//printf("%d %d \n", spots[0], spots[1]);
+        //printf("%d %d\n", spots[0], spots[1]);
+        if ((spots[0] == 0) || (spots[1] == 0)) {
+	    found = 1;
+	}
+       
     }
-    //printf("aa %s aa \n", align1);
-    //align1[aligncount] = '\0';
-    //align2[aligncount] = '\0';
-    //printf("%s", align1);
+    // terminate strings
+    align1[aligncount] = '\0';
+    align2[aligncount] = '\0';
     printf("Visual representation of alignment (sequences are reversed):\n");
     printf("%s\n%s\n", align1, align2);
 
